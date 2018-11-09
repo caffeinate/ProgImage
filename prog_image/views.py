@@ -7,6 +7,7 @@ from flask import Blueprint, request, current_app, jsonify, send_file
 
 from prog_image.utils import JsonException, url_for
 from prog_image.control.file_base_filesystem import FileBaseFilesystem
+from prog_image.control.image_anvil import ImageAnvil
 
 general_bp = Blueprint('api_views', __name__)
 
@@ -64,3 +65,34 @@ def raw_image(ident):
                      mimetype='image/jpeg',
                      as_attachment=False,
                      attachment_filename=file_storage.meta_data['file_name'])
+
+@general_bp.route('/images/<ident>/<transform_name>/')
+def transform_image(ident, transform_name):
+    """
+    see :class:`prog_image.control.image_anvil.ImageAnvil` for available
+    transforms.
+    """
+    file_storage = FileBaseFilesystem(current_app.config['FILEBASE'])
+    file_storage.stored_file = ident
+
+    if not file_storage.file_exists():
+        raise JsonException("File not found", status_code=404)
+
+    image_anvil = ImageAnvil()
+    if not image_anvil.is_valid_transform(transform_name):
+        raise JsonException("Unknown transform type")
+
+    thumbnail_file = file_storage.variant_stored_location(transform_name)
+    if not file_storage.file_exists(transform_name=transform_name):
+        # not already on disk so build it
+        image_anvil.transform(transform_name,
+                              file_storage.stored_location,
+                              thumbnail_file
+                              )
+
+    # TODO mimetype=fsm.mime_type,
+    suggested_name = file_storage.meta_data['file_name']+'_'+transform_name
+    return send_file(thumbnail_file,
+                     mimetype='image/jpeg',
+                     as_attachment=False,
+                     attachment_filename=suggested_name)

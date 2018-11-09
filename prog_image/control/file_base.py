@@ -23,7 +23,7 @@ class FileBase:
                             # for now, just original filename must be JSON
                             # serialisable.
 
-    def file_exists(self):
+    def file_exists(self, transform_name=None):
         raise NotImplementedError()
 
     @property
@@ -32,6 +32,9 @@ class FileBase:
         :returns: (str) absolute path to file, meaning depends on subclass
         """
         raise NotImplementedError()
+
+    def variant_stored_location(self, transform_name):
+        return self.stored_location + '.' + transform_name
 
     def save(self, file_like):
         """

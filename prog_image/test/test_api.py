@@ -1,8 +1,9 @@
 '''
 @author: si
 '''
-import json
 from io import BytesIO
+import json
+import os
 import unittest
 
 from prog_image.app import create_app
@@ -75,3 +76,21 @@ class ApiTest(unittest.TestCase):
         rv = self.test_client.post('/', data=d)
         self.assertEqual(400, rv.status_code)
         
+
+    def test_generate_thumbnail(self):
+        """
+        upload a read image and download the thumbnail
+        """
+        sample_image_file = os.path.abspath(os.path.dirname(__file__)+'/sample_data/diver.jpeg')
+        with open(sample_image_file, 'rb') as f:
+            d = {'image': (BytesIO(f.read()), 'diver.jpeg') }
+
+        rv = self.test_client.post('/', data=d)
+        self.assertEqual(201, rv.status_code)
+        response = json.loads(rv.data)
+
+        # should/could use http Location header
+        url = '/images/{}/thumbnail/'.format(response['id'])
+        rv = self.test_client.get(url)
+        self.assertEqual(200, rv.status_code)
+        # not checking the actual image

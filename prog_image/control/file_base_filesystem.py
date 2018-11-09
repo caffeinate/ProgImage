@@ -13,8 +13,12 @@ class FileBaseFilesystem(FileBase):
     File system implementation.
     Can use local or network filesystems.
     """
-    def file_exists(self):
-        return os.access(self.stored_location, os.R_OK)
+    def file_exists(self, transform_name=None):
+        if transform_name is None:
+            return os.access(self.stored_location, os.R_OK)
+        else:
+            target_file = self.variant_stored_location(transform_name)
+            return os.access(target_file, os.R_OK)
 
     @property
     def _stored_parts(self):
