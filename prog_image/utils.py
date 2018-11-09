@@ -1,7 +1,8 @@
 '''
 @author: si
 '''
-from flask import current_app, jsonify
+from flask import current_app, jsonify, request
+from flask import url_for as url_for_flask
 
 class JsonException(Exception):
     status_code = 400
@@ -43,3 +44,16 @@ def handle_json_exception(error):
     else:
         response = jsonify({'msg': 'Unknown error'})
         return response, 500
+
+def url_for(*args, **kwargs):
+    """
+    wrap normal flask url_for and use config['PREFERRED_URL_SCHEME'] but
+    without requiring config to have APPLICATION_ROOT & SERVER_NAME
+    """
+    if '_external' not in kwargs:
+        return url_for_flask(*args, **kwargs)
+    #print "schema:"+request.environ.get('HTTP_X_SCHEME', "unknown")
+    forced_scheme = request.environ.get('HTTP_X_SCHEME',
+                                        current_app.config.get('PREFERRED_URL_SCHEME'))
+     
+    return url_for_flask(*args, _scheme=forced_scheme, **kwargs)

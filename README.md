@@ -47,9 +47,12 @@ You should now see a message saying the port it's running on.
 
 ## Using it
 
-For the examples below I'll assume it's running as `http://127.0.0.1:5070/`. And I'm using [HTTPie](https://httpie.org) but you might want to use curl or wget etc...
+For the examples below I'll assume it's running as `http://127.0.0.1:5070/`. And I'm using curl but you might want to use httpie or wget etc...
 
 Send an image
 ```Shell
-http --form POST localhost:5070 image=@IMG_1780.JPG
+curl -v -F "image=@IMG_1780.JPG" localhost:5070
 ```
+
+You should see 'Location' in the returned http header. This is the URL for the object.
+
