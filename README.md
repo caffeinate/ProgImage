@@ -6,8 +6,8 @@ It's a [Flask](http://flask.pocoo.org/) app for RESTFul API image storage transf
 ## Overview
 
 * No database
-* Meta data is stored alongside images in a object store.
-* Filesystem can be used as the object store
+* Meta data is stored alongside images in an object store.
+* Filesystem can be used as the object store (this is the current store implementation)
 * Image transforms (make thumbnail etc.) are cached in the object store
 
 ## Example Deployment on AWS
@@ -103,20 +103,10 @@ curl http://localhost:5070/images/89387845b87c8aa70ab5f433b84148c193286d22/thumb
 
 ### On demand images
 
-The source image is POSTed to a transform. In this case a thumnail. The response returns the thumbnail which is being saved to `file.jpeg`.
+The source image is POSTed to a transform. In this case a thumbnail. The response returns the thumbnail and it's being saved to `file.jpeg`.
 
 ```Shell
 curl -v -F "image=@14590987878890.jpg" localhost:5070/on_demand/thumbnail/ > file.jpeg
 ```
 
 
-## Missing parts
-
-Development is time boxed, here is what I'd add next
-
-* proper MIME detection and responses
-* HAL or JSON-LD or something more discoverable. Would be useful to know which transforms are available.
-* The `ImageAnvil()` transform shouldn't be called within the web request, it should be sent to a queue and should wait for the response.
-* Retrieving the image from URL is part of the spec. this is missing.
-* Finish user passing arguments to the transform - e.g. image size for the thumbnail
-* Swagger doc.
