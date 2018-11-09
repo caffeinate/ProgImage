@@ -2,6 +2,7 @@
 @author: si
 '''
 import hashlib
+from tempfile import NamedTemporaryFile
 
 from flask import Blueprint, request, current_app, jsonify, send_file
 
@@ -69,6 +70,8 @@ def raw_image(ident):
 @general_bp.route('/images/<ident>/<transform_name>/')
 def transform_image(ident, transform_name):
     """
+    Transform an image already uploaded.
+
     see :class:`prog_image.control.image_anvil.ImageAnvil` for available
     transforms.
     """
@@ -82,17 +85,58 @@ def transform_image(ident, transform_name):
     if not image_anvil.is_valid_transform(transform_name):
         raise JsonException("Unknown transform type")
 
-    thumbnail_file = file_storage.variant_stored_location(transform_name)
+    transformed_image = file_storage.variant_stored_location(transform_name)
     if not file_storage.file_exists(transform_name=transform_name):
         # not already on disk so build it
+        current_app.logger.info("Transforming image")
         image_anvil.transform(transform_name,
                               file_storage.stored_location,
-                              thumbnail_file
+                              transformed_image
                               )
+    else:
+        current_app.logger.info("Using cached image")
 
     # TODO mimetype=fsm.mime_type,
     suggested_name = file_storage.meta_data['file_name']+'_'+transform_name
-    return send_file(thumbnail_file,
+    return send_file(transformed_image,
+                     mimetype='image/jpeg',
+                     as_attachment=False,
+                     attachment_filename=suggested_name)
+
+@general_bp.route('/on_demand/<transform_name>/', methods=['POST'])
+def on_demand(transform_name):
+    """
+    POST and image directly to a transform. No files are stored,
+    transformed image is in the response.
+    """
+    # multi-part form mode
+    if 'image' not in request.files:
+        msg = ("Missing data: Image uploads should be in multi-part forms "
+               "with the image data being named 'image'")
+        raise JsonException(msg)
+
+    uploaded_file = request.files['image']
+
+    image_anvil = ImageAnvil()
+    if not image_anvil.is_valid_transform(transform_name):
+        raise JsonException("Unknown transform type")
+
+
+    transformed_file = NamedTemporaryFile()
+
+    current_app.logger.info("Transforming on demand image")
+    image_anvil.transform(transform_name,
+                          uploaded_file.stream,
+                          transformed_file
+                          )
+
+    # transformed file will be cleaned up after garbage collection
+
+    # TODO mimetype=fsm.mime_type,
+    suggested_name = transform_name
+    transformed_file.flush()
+    transformed_file.seek(0)
+    return send_file(transformed_file,
                      mimetype='image/jpeg',
                      as_attachment=False,
                      attachment_filename=suggested_name)
