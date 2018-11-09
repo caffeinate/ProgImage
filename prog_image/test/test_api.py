@@ -1,6 +1,7 @@
 '''
 @author: si
 '''
+from io import BytesIO
 import unittest
 
 from prog_image.app import create_app
@@ -11,7 +12,7 @@ SHOW_LOG_MESSAGES = False
 if not SHOW_LOG_MESSAGES:
     # hide log messages
     import logging
-    logger = logging.getLogger('prog_image.app')
+    logger = logging.getLogger(__name__)
     logger.setLevel(logging.CRITICAL)
 
 class ApiTest(unittest.TestCase):
@@ -36,6 +37,15 @@ class ApiTest(unittest.TestCase):
         rv = self.test_client.get('/')
         self.assertEqual(405, rv.status_code) # 405 Method Not Allowed
 
-        rv = self.test_client.post('/', data={})
+    def test_image_upload(self):
+        """
+        multi-part form mode
+        """
+        d = {'image': (BytesIO(b"file contents"), 'myfile.jpg') }
+        rv = self.test_client.post('/', data=d)
         self.assertEqual(200, rv.status_code)
-        self.assertIn(b'Hello world', rv.data)
+
+        # wrong form field name
+        d = {'imageX': (BytesIO(b"file contents"), 'myfile.jpg') }
+        rv = self.test_client.post('/', data=d)
+        self.assertEqual(400, rv.status_code)

@@ -1,3 +1,6 @@
+prog_image/settings/local_config*.py
+!prog_image/settings/local_config_template.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
