@@ -94,3 +94,17 @@ class ApiTest(unittest.TestCase):
         rv = self.test_client.get(url)
         self.assertEqual(200, rv.status_code)
         # not checking the actual image
+
+    def test_on_demand_thumbnail(self):
+        """
+        image uploaded and result downloaded in single request. Nothing stored server side
+        """
+        sample_image_file = os.path.abspath(os.path.dirname(__file__)+'/sample_data/diver.jpeg')
+        with open(sample_image_file, 'rb') as f:
+            d = {'image': (BytesIO(f.read()), 'diver.jpeg') }
+
+        rv = self.test_client.post('/on_demand/thumbnail/', data=d)
+        self.assertEqual(200, rv.status_code)
+
+        # not checking image, just number of bytes
+        self.assertEqual(3378, len(rv.data))
