@@ -19,7 +19,9 @@ class FileBase:
         """
         self.base_path = base_path
         self.stored_file = None # file name without path
-        self.meta_data = None
+        self._meta_data = None # anything useful could be stored in meta data.
+                            # for now, just original filename must be JSON
+                            # serialisable.
 
     def file_exists(self):
         raise NotImplementedError()
@@ -38,3 +40,11 @@ class FileBase:
         :param: file_like has the save() method
         """
         raise NotImplementedError()
+
+    def get_meta_data(self):
+        raise NotImplementedError()
+
+    def set_meta_data(self, md):
+        self._meta_data = md
+
+    meta_data = property(get_meta_data, set_meta_data)

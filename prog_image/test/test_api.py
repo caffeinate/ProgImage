@@ -43,7 +43,8 @@ class ApiTest(unittest.TestCase):
         """
         multi-part form mode
         """
-        d = {'image': (BytesIO(b"file contents"), 'myfile.jpg') }
+        sample_file_contents = "file contents"
+        d = {'image': (BytesIO(bytes(sample_file_contents, 'ascii')), 'myfile.jpg') }
         rv = self.test_client.post('/', data=d)
         self.assertEqual(201, rv.status_code)
 
@@ -61,6 +62,12 @@ class ApiTest(unittest.TestCase):
 
         self.assertTrue(url.endswith('/images/{}/'.format(response['id'])))
 
+        # ensure it was written to disk
+        file_on_disk = self.config.FILEBASE+'/0/3/'+response['id']
+        with open(file_on_disk) as f:
+            file_contents = f.read()
+        
+        self.assertEqual(sample_file_contents, file_contents)
 
     def test_wrong_form_field_name(self):
         # wrong form field name

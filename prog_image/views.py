@@ -3,7 +3,7 @@
 '''
 import hashlib
 
-from flask import Blueprint, request, current_app, jsonify
+from flask import Blueprint, request, current_app, jsonify, send_file
 
 from prog_image.utils import JsonException, url_for
 from prog_image.control.file_base_filesystem import FileBaseFilesystem
@@ -52,4 +52,15 @@ def index():
 
 @general_bp.route('/images/<ident>/')
 def raw_image(ident):
-    pass
+
+    file_storage = FileBaseFilesystem(current_app.config['FILEBASE'])
+    file_storage.stored_file = ident
+
+    if not file_storage.file_exists():
+        raise JsonException("File not found", status_code=404)
+
+    # TODO mimetype=fsm.mime_type,
+    return send_file(file_storage.stored_location,
+                     mimetype='image/jpeg',
+                     as_attachment=False,
+                     attachment_filename=file_storage.meta_data['file_name'])

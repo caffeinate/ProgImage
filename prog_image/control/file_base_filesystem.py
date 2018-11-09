@@ -23,7 +23,7 @@ class FileBaseFilesystem(FileBase):
         :returns: tuple (new_base_path, filename)
         """
         sf = self.stored_file
-        path = self.base_path + sf[0] + '/' + sf[1] + '/'
+        path = self.base_path + '/' + sf[0] + '/' + sf[1] + '/'
         return (path, self.stored_file)
 
     @property
@@ -37,9 +37,20 @@ class FileBaseFilesystem(FileBase):
 
     def save(self, file_like):
         os.makedirs(self._stored_parts[0], exist_ok=True)
+        file_like.stream.seek(0)
         file_like.save(self.stored_location)
-        
-        if self.meta_data:
+
+        if self._meta_data:
             meta_file = self.stored_location+'.meta'
             with open(meta_file, 'w') as f:
-                f.write(json.dumps(self.meta_data))
+                f.write(json.dumps(self._meta_data))
+
+    def get_meta_data(self):
+        if not self._meta_data:
+            meta_file = self.stored_location+'.meta'
+            if os.access(meta_file, os.R_OK):
+                with open(meta_file, 'r') as f:
+                    self._meta_data = json.loads(f.read())
+        return self._meta_data
+
+    meta_data = property(get_meta_data, FileBase.set_meta_data)
